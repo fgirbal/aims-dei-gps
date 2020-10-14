@@ -45,7 +45,7 @@ def read_and_process_2D_data(filename: str, y_axis: str="Tide height (m)", true_
     return known_data, missing_data
 
 
-def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.array, y: np.array, y_mean: float, ylabel: str="Tide Height (m)", y_star: Optional[np.array]=None) -> None:
+def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.array, y: np.array, y_mean: float, y_label: str="Tide Height (m)", y_star: Optional[np.array]=None) -> None:
     """Plot the GP's posterior, along with the known data points
     
     Args:
@@ -55,7 +55,7 @@ def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.
         x (np.array): input given data
         y (np.array): output given data
         y_mean (float): y mean of the known data
-        ylabel (str, optional): label of the y axis
+        y_label (str, optional): label of the y axis
         y_star (Optional[np.array], optional): GT y values
     """
     if np.linalg.cond(cov_f_star) > 10**10:
@@ -81,6 +81,6 @@ def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.
 
     plt.legend()
     plt.xlabel("$\Delta t$ (days)")
-    plt.ylabel(ylabel)
+    plt.ylabel(y_label)
 
     plt.show()
