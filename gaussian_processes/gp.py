@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 from typing import Tuple, Callable
 
 
-def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, kernel: Callable) -> Tuple[np.array, np.array, np.array]:
+def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, kernel: Callable) -> Tuple[np.array, np.array, float]:
     """Computes the GP's posterior and log marginal likelihood
     
     Args:
@@ -14,7 +14,7 @@ def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, ke
         kernel (Callable, optional): kernel function
     
     Returns:
-        Tuple[np.array, np.array, np.array]: mean vector and covariance matrix of the
+        Tuple[np.array, np.array, float]: mean vector and covariance matrix of the
         GP's posterior, p(f*|x,y,x*), as well as log marginal likelihood
     """
     n = x.shape[0]
@@ -34,6 +34,9 @@ def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, ke
     cov_f_star = K_X_star_X_star - np.matmul(v.T, v)
 
     log_marginal_likelihood = -1/2*np.matmul(y.T, alpha) - np.sum(np.log(noisy_K_X_X.diagonal())) - n/2*np.log(2*np.pi)
+
+    # log marginal likelihood should be a float
+    log_marginal_likelihood = log_marginal_likelihood.ravel()[0]
 
     return f_bar_star, cov_f_star, log_marginal_likelihood
 
@@ -79,7 +82,7 @@ def gp_hyperparameter_optimization(x: np.array, y: np.array, x_star: np.array, s
 
     # the function to be optimized is the log marginal likelihood
     def negative_log_marginal_likelihood_fn(param_vector):
-        _, _, log_marginal_likelihood = gaussian_process_regression(
+        _, _, log_marginal_likelihood = gp_regression(
             x,
             y,
             x_star,
@@ -88,7 +91,7 @@ def gp_hyperparameter_optimization(x: np.array, y: np.array, x_star: np.array, s
         )
 
         # we want to maximize log marginal likelihood
-        return -log_marginal_likelihood[0,0]
+        return -log_marginal_likelihood
 
     def print_information(current_params):
         global n_evaluations
@@ -100,13 +103,13 @@ def gp_hyperparameter_optimization(x: np.array, y: np.array, x_star: np.array, s
         initial_params,
         callback=print_information,
         bounds=bounds,
-        method="SLSQP"
+        method="L-BFGS-B"
     )
 
     return result.x
 
     
-def gp_point_sequential_prediction(x: np.array, y: np.array, x_star: np.array, sigma_n: float, kernel: Callable, lookahead: float=0) -> Tuple[np.array, np.array, np.array]:
+def gp_point_sequential_prediction(x: np.array, y: np.array, x_star: np.array, sigma_n: float, kernel: Callable, lookahead: float=0) -> Tuple[np.array, np.array, float]:
     """Perform sequential regression for x_star (shaped (1, 1)), assuming a given
     lookahead, that is, use only data in the training set x such that
         x' + lookahead <= x_star, for all x' in x
@@ -122,7 +125,7 @@ def gp_point_sequential_prediction(x: np.array, y: np.array, x_star: np.array, s
             and the x at which predictions are made in the sequential setting
     
     Returns:
-        Tuple[np.array, np.array, np.array]: mean vector and covariance matrix of the GP's
+        Tuple[np.array, np.array, float]: mean vector and covariance matrix of the GP's
         posterior, p(f*|x,y,x*), as well as log marginal likelihood
     """
     # get the training data based on the lookahead
