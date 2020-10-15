@@ -33,7 +33,7 @@ def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, ke
     v = np.linalg.solve(L, K_X_star_X.T)
     cov_f_star = K_X_star_X_star - np.matmul(v.T, v)
 
-    log_marginal_likelihood = -1/2*np.matmul(y.T, alpha) - np.sum(np.log(noisy_K_X_X.diagonal())) - n/2*np.log(2*np.pi)
+    log_marginal_likelihood = -1/2*np.matmul(y.T, alpha) - np.sum(np.log(np.diagonal(L))) - n/2*np.log(2*np.pi)
 
     # log marginal likelihood should be a float
     log_marginal_likelihood = log_marginal_likelihood.ravel()[0]
