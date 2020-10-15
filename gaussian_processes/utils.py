@@ -105,9 +105,9 @@ def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.
         if x_gt is None:
             x_gt = x_star
 
-        plt.plot(x_gt, y_mean + y_gt, "r.", markersize=3, label="GT Data")
+        plt.plot(x_gt, y_mean + y_gt, "r.", markersize=3, label="Test Data")
 
-    plt.plot(x, y_mean + y, "k*", markersize=4, label="Input Data")
+    plt.plot(x, y_mean + y, "k*", markersize=4, label="Train Data")
 
     plt.legend(prop={'size': 8})
     plt.xlabel("$\Delta t$ (days)")
