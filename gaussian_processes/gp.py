@@ -41,7 +41,7 @@ def gp_regression(x: np.array, y: np.array, x_star: np.array, sigma_n: float, ke
     return f_bar_star, cov_f_star, log_marginal_likelihood
 
 
-def gp_assess_model_performance(y_star: np.array, f_bar_star: np.array, cov_f_star: np.array) -> np.array:
+def gp_assess_model_performance(y_star: np.array, f_bar_star: np.array, cov_f_star: np.array, sigma_n: np.array) -> np.array:
     """Given the groundtruth datapoints (x_star, y_star), and assuming the estimated
     mean and covariance of the GP's posterior at x_star to be given by f_bar_star and
     cov_f_star, estimates the posterior over y_star given x_star and the model:
@@ -52,11 +52,12 @@ def gp_assess_model_performance(y_star: np.array, f_bar_star: np.array, cov_f_st
         y_star (np.array): groundtruth y data, shape (n, 1)
         f_bar_star (np.array): mean vector of the GP's posterior
         cov_f_star (np.array): covariance matrix of the GP's posterior
+        sigma_n (np.array): noise of the target y
     
     Returns:
-        np.array: marginal distribution of y_* given x_* and the model, shape (n, 1)
+        np.array: negative of the marginal distribution of y_* given x_* and the model, shape (n, 1)
     """
-    sigma_star_squared = np.diag(cov_f_star).reshape(-1, 1)
+    sigma_star_squared = np.diag(cov_f_star).reshape(-1, 1) + sigma_n**2*cov_f_star.shape[0]
     return 1/2*np.log(2*np.pi*sigma_star_squared) + (y_star - f_bar_star)**2/(2*sigma_star_squared)
 
 
