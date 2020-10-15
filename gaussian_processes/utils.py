@@ -6,7 +6,7 @@ from typing import Optional
 
 plt.rcParams.update({
     "text.usetex": True,
-    "font.size": 12
+    "font.size": 14
 })
 
 
@@ -45,7 +45,7 @@ def read_and_process_2D_data(filename: str, y_axis: str="Tide height (m)", true_
     return known_data, missing_data
 
 
-def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.array, y: np.array, y_mean: float, y_label: str="Tide Height (m)", y_star: Optional[np.array]=None) -> None:
+def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.array, y: np.array, y_mean: float, y_label: str="Tide Height (m)", title: Optional[str]=None, y_gt: Optional[np.array]=None, x_gt: Optional[np.array]=None, draw_samples: bool=True) -> None:
     """Plot the GP's posterior, along with the known data points
     
     Args:
@@ -56,7 +56,10 @@ def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.
         y (np.array): output given data
         y_mean (float): y mean of the known data
         y_label (str, optional): label of the y axis
-        y_star (Optional[np.array], optional): GT y values
+        title (Optional[str], optional): plot title
+        y_gt (Optional[np.array], optional): GT y values
+        x_gt (Optional[np.array], optional): GT x values, if different from x_star
+        draw_samples (bool, optional): if True, draw function samples and plot them
     """
     if np.linalg.cond(cov_f_star) > 10**10:
         print(f"Covariance matrix is ill-conditioned! Condition number: {np.linalg.cond(cov)}")
@@ -66,21 +69,49 @@ def plot_gp(f_bar_star: np.array, cov_f_star: np.array, x_star: np.array, x: np.
     sigma_star = np.sqrt(np.diag(cov_f_star))
 
     # function draws
-    function_draws = np.random.multivariate_normal(f_bar_star, cov_f_star, 3)
-    for i, draw_points in enumerate(function_draws):
-        plt.plot(x_star, y_mean + draw_points, lw=1, ls='--', label=f'Draw {i+1}')
+    if draw_samples:
+        function_draws = np.random.multivariate_normal(f_bar_star, cov_f_star, 3)
+        for i, draw_points in enumerate(function_draws):
+            plt.plot(
+                x_star,
+                y_mean + draw_points,
+                lw=1,
+                ls='--',
+                label=f'Draw {i+1}',
+                color=f'C{4+i}'
+            )
 
-    plt.fill_between(x_star, y_mean + f_bar_star + 2*sigma_star, y_mean + f_bar_star - 2*sigma_star, alpha=0.1, label="$\pm2\sigma$")
-    plt.fill_between(x_star, y_mean + f_bar_star + sigma_star, y_mean + f_bar_star - sigma_star, alpha=0.2, label="$\pm\sigma$")
-    plt.plot(x_star, y_mean + f_bar_star, label="Mean")
+    plt.fill_between(
+        x_star,
+        y_mean + f_bar_star + 2*sigma_star,
+        y_mean + f_bar_star - 2*sigma_star,
+        alpha=0.15,
+        label="$\pm2\sigma$",
+        color='C0',
+        linewidth=0
+    )
+    plt.fill_between(
+        x_star,
+        y_mean + f_bar_star + sigma_star,
+        y_mean + f_bar_star - sigma_star,
+        alpha=0.3,
+        label="$\pm\sigma$",
+        color='C0',
+        linewidth=0
+    )
+    plt.plot(x_star, y_mean + f_bar_star, label="Mean", color='C2')
     
-    if y_star is not None:
-        plt.plot(x_star, y_mean + y_star, "rx", markersize=2, label="GT Data")
+    if y_gt is not None:
+        if x_gt is None:
+            x_gt = x_star
 
-    plt.plot(x, y_mean + y, "kx", markersize=3, label="Input Data")
+        plt.plot(x_gt, y_mean + y_gt, "r.", markersize=3, label="GT Data")
 
-    plt.legend()
+    plt.plot(x, y_mean + y, "k*", markersize=4, label="Input Data")
+
+    plt.legend(prop={'size': 8})
     plt.xlabel("$\Delta t$ (days)")
     plt.ylabel(y_label)
+    plt.title(title)
 
     plt.show()
